@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Run shellcheck on scripts
+        run: |
+          find scripts -name "*.sh" -print0 | xargs -0 shellcheck || true
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make build
+        run: |
+          chmod +x scripts/build/build-all.sh || true
+          sh scripts/build/build-all.sh
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make test
+        run: |
+          chmod +x scripts/test/run-all.sh || true
+          sh scripts/test/run-all.sh
